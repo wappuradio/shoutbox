@@ -1,0 +1,25 @@
+{
+  "name": "shoutbox",
+  "version": "1.0.0",
+  "description": "Wappuradio shoutbox",
+  "main": "shout.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dregu/shoutbox.git"
+  },
+  "author": "Dregu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Dregu/shoutbox/issues"
+  },
+  "homepage": "https://github.com/Dregu/shoutbox#readme",
+  "dependencies": {
+    "express": "^4.13.3",
+    "ircdkit": "^1.0.3",
+    "node-telegram-bot-api": "^0.17.0",
+    "socket.io": "^1.3.7"
+  }
+}

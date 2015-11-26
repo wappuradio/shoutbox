@@ -1,0 +1,11 @@
+var config = {
+	hostname: '', // irc domain name
+	token: '', // telegram bot token
+	group: '', // telegram group id (-123456789)
+	http_port: 8080, // port for web chat
+	irc_port: 6667, // port for irc server
+	channel: '#shoutbox', // irc channel
+	history: 10 // keep n messages in history
+};
+
+module.exports = config;
