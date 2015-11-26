@@ -9,8 +9,9 @@ body { font: 13px Helvetica, sans-serif; }
 input { width: 100%; position: absolute; bottom: 0; height: 32px; line-height: 32px; }
 .msg { background: rgba(0,0,0,0.05); margin: 2px; border-radius: 2px; }
 .nick { font-weight: bold; }
+.time { float: right; font-size: 0.7em; padding: 2px 2px 0 0; }
 #text { display: none; }
-#shoutbox { width: 100%; max-height: 100%; display: flex; flex-flow: column; overflow: scroll; position: absolute; bottom: 0; padding-bottom: 32px; }
+#shoutbox { width: 100%; max-height: 100%; display: flex; flex-flow: column; overflow: auto; position: absolute; bottom: 0; margin-bottom: 32px; }
 </style>
 </head>
 <body>
@@ -36,8 +37,13 @@ $('#text').on('keypress', function (e) {
 	}
 });
 socket.on('msg', function (msg) {
-	$('#shoutbox').append('<div class="msg"><div class="nick">'+msg.nick+'</div><div class="text">'+msg.text+'</div></div>');
-	$('#shoutbox').scrollTop($('#shoutbox')[0].scrollHeight);
+	var date = new Date();
+	var hour = date.getHours();
+	var min = date.getMinutes();
+	if(min < 10) min = '0'+min;
+	var time = hour+':'+min;
+	$('#shoutbox').append('<div class="msg"><div class="time">'+time+'</div><div class="nick">'+msg.nick+'</div><div class="text">'+msg.text+'</div></div>');
+	$('#shoutbox').stop().animate({ scrollTop: $('#shoutbox')[0].scrollHeight }, 500);
 });
 </script>
 </body>
