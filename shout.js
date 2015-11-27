@@ -17,6 +17,26 @@ var http = require('http').Server(express);
 var io = require('socket.io')(http);
 
 var queue = [];
+var users = {};
+
+function spam(id, text) {
+	if (text.length > 1000) return true;
+	if (!users[id]) users[id] = 0;
+	users[id]++;
+	if (users[id] > 7) {
+		users[id] = 67;
+		return true;
+	}
+	return false;
+}
+
+setInterval(function () {
+	for (var id in users) {
+		if(users.hasOwnProperty(id) && users[id] > 0) {
+			users[id]--;
+		}
+	}
+}, 1000);
 
 express.get('/', function (req, res) {
 	res.sendFile(__dirname + '/index.html');
@@ -24,6 +44,7 @@ express.get('/', function (req, res) {
 
 io.on('connection', function (socket) {
 	socket.on('msg', function (msg) {
+		if (spam(socket.client.id)) return;
 		ircmsg(msg.nick, msg.text);
 		telemsg(msg.nick, msg.text);
 		socketmsg(msg.nick, msg.text);
@@ -51,17 +72,14 @@ function ircmsg(nick, msg, id) {
 			irc._connections[i].send(':'+nick+'!'+nick.toLowerCase()+'@'+config.hostname+' PRIVMSG '+config.channel+' :'+msg);
 		}
 	}
-	console.log(nick, msg);
 }
 
 function telemsg(nick, msg) {
 	bot.sendMessage(groupId, '<'+nick+'> '+msg);
-	console.log(nick, msg);
 }
 
 function socketmsg(nick, msg) {
 	io.emit('msg', { nick: nick, text: msg });
-	console.log(nick, msg);
 }
 
 irc.listen(config.irc_port, function () {
@@ -83,6 +101,7 @@ irc.listen(config.irc_port, function () {
 		});
 		connection.on('PRIVMSG', function (target, message) {
 			if (target.match(/^#shoutbox$/i)) {
+				if (spam(connection.mask)) return;
 				telemsg(connection.nickname, message);
 				socketmsg(connection.nickname, message);
 				ircmsg(connection.nickname, message, connection.id);
@@ -106,6 +125,7 @@ irc.listen(config.irc_port, function () {
 bot.on('message', function (msg) {
 	if (!msg.text || msg.text.match(/^\//)) return;
 	if (msg.chat.id != groupId) return;
+	if (spam(msg.from.id)) return;
 	ircmsg(msg.from.username || msg.from.first_name, msg.text);
 	socketmsg(msg.from.username || msg.from.first_name, msg.text);
 	logmsg(msg.from.username || msg.from.first_name, msg.text);

@@ -43,6 +43,8 @@ socket.on('msg', function (msg) {
 	var min = date.getMinutes();
 	if(min < 10) min = '0'+min;
 	var time = hour+':'+min;
+	msg.nick = msg.nick.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	msg.text = msg.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	$('#shoutbox').append('<div class="msg"><div class="time">'+time+'</div><div class="nick">'+msg.nick+'</div><div class="text">'+msg.text+'</div></div>');
 	$('#shoutbox').stop().animate({ scrollTop: $('#shoutbox')[0].scrollHeight }, 500);
 });
