@@ -1,8 +1,11 @@
 var config = require('./config');
 
+var fs = require('fs');
+
 var TelegramBot = require('node-telegram-bot-api');
 var token = config.token;
 var bot = new TelegramBot(token, {polling: true});
+var groupId = config.group;
 
 var ircdkit = require('ircdkit');
 var ircd = ircdkit({
@@ -10,8 +13,6 @@ var ircd = ircdkit({
 	requireNickname: true,
 	maxNickLength: 15
 });
-
-var groupId = config.group;
 
 var express = require('express')();
 var http = require('http').Server(express);
@@ -23,11 +24,13 @@ var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	channels: config.public_channels.concat(config.private_channels)
 });
 
-var queue = [], users = {}, var lastsong = '';
+var queue = [], users = {}, lastsong = '';
 
 function private(chan) {
+	console.log(config.private_channels);
 	for (var i in config.private_channels) {
-		if (config.private_channels[i] == chan.toLower()) {
+		console.log(config.private_channels[i].split(/ /)[0], chan.toLowerCase());
+		if (config.private_channels[i].split(/ /)[0] == chan.toLowerCase()) {
 			return true;
 		}
 	}
@@ -35,18 +38,27 @@ function private(chan) {
 }
 
 irc.addListener('message', function (from, to, msg) {
-	msg = msg.split(' ');
+	cmd(from, to, msg);
+});
+
+function cmd(from, to, msg) {
+	msg = msg.trim().split(' ');
 	var cmd = msg[0];
 	msg.shift();
-	var arg = msg.join(' ').trim();
-	if (cmd == '!nytsoi' && private(from))
+	var arg = msg.join(' ');
+	if (cmd == '!nytsoi' && private(to)) {
 		np(arg);
-	} else if (cmd == '!levytoive' && private(from)) {
-		levytoive(arg);
-	} else if (cmd == '!toive') {
-		toive(arg);
+	} else if (cmd == '!levytoive' && private(to)) {
+		toive(arg, from, to, config.levytoiveet);
+	} else if (cmd == '!toive' || (cmd == '/toive' && to == 'Telegram')) {
+		toive(arg, from, to, config.biisitoiveet);
 	}
-});
+}
+
+function toive(what, who, where, file) {
+	var when = new Date().toISOString();
+	fs.appendFile(file, '| '+when+' | %%'+who+'%% | %%'+where+'%% | %%'+what+'%% |\n');
+}
 
 function ircmsg(to, msg) {
 	irc.say(to, msg);
@@ -62,19 +74,22 @@ function np(song) {
 			if (!error && response.statusCode === 200) {
 				if (body != '') {
 					console.log(body);
-					//sendnp(body);
-					lastsong == body;
+					sendnp(body);
+					lastsong = body;
 				}
 			}
 		});
 	} else if (song != lastsong) {
 		sendnp(song);
+		lastsong = song;
 	}
 }
 
 function sendnp(song) {
 	var msg = 'Nyt soi: '+song;
-	ircmsg(config.irc_channels[0], msg);
+	for (var i in config.public_channels) {
+		ircmsg(config.public_channels[i], msg);
+	}
 	ircdmsg(config.irc_nick, msg);
 	telemsg(config.irc_nick, msg);
 	socketmsg(config.irc_nick, msg);
@@ -84,7 +99,7 @@ function sendnp(song) {
 }
 
 function spam(id, text) {
-	if (text.length > 1000) return true;
+	if (text.length > 400) return true;
 	if (!users[id]) users[id] = 0;
 	users[id]++;
 	if (users[id] > 7) {
@@ -109,6 +124,7 @@ express.get('/', function (req, res) {
 io.on('connection', function (socket) {
 	socket.on('msg', function (msg) {
 		if (spam(socket.client.id, msg.text)) return;
+		cmd(msg.nick, 'Shoutbox', msg.text);
 		ircdmsg(msg.nick, msg.text);
 		telemsg(msg.nick, msg.text);
 		socketmsg(msg.nick, msg.text);
@@ -166,6 +182,7 @@ ircd.listen(config.ircd_port, function () {
 		connection.on('PRIVMSG', function (target, message) {
 			if (target.match(/^#shoutbox$/i)) {
 				if (spam(connection.mask, message)) return;
+				cmd(connection.nickname, '#shoutbox', message);
 				telemsg(connection.nickname, message);
 				socketmsg(connection.nickname, message);
 				ircdmsg(connection.nickname, message, connection.id);
@@ -190,6 +207,7 @@ bot.on('message', function (msg) {
 	if (!msg.text || msg.text.match(/^\//)) return;
 	if (msg.chat.id != groupId) return;
 	if (spam(msg.from.id, msg.text)) return;
+	cmd(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
 	ircdmsg(msg.from.username || msg.from.first_name, msg.text);
 	socketmsg(msg.from.username || msg.from.first_name, msg.text);
 	logmsg(msg.from.username || msg.from.first_name, msg.text);
