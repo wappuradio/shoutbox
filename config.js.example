@@ -11,7 +11,9 @@ var config = {
 	irc_nick: '',
 	irc_host: '',
 	irc_port: 6667,
-	irc_channels: ['#foo', '#bar']
+	private_channels: ['#foo', '#bar'],
+	public_channels: ['#secret key'],
+	np_url: ''
 };
 
 module.exports = config;

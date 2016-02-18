@@ -16,29 +16,36 @@ var groupId = config.group;
 var express = require('express')();
 var http = require('http').Server(express);
 var io = require('socket.io')(http);
+var request = require('request');
 
 var Irc = require('irc');
 var irc = new Irc.Client(config.irc_host, config.irc_nick, {
-	channels: config.irc_channels
+	channels: config.public_channels.concat(config.private_channels)
 });
 
-var Mpd = require('mpd'), cmd = Mpd.cmd;
-var mpd = Mpd.connect({
-	port: config.mpd_port,
-	host: config.mpd_host
-});
+var queue = [], users = {}, var lastsong = '';
 
-var queue = [];
-var users = {};
-var nowplaying = '';
+function private(chan) {
+	for (var i in config.private_channels) {
+		if (config.private_channels[i] == chan.toLower()) {
+			return true;
+		}
+	}
+	return false;
+}
 
 irc.addListener('message', function (from, to, msg) {
-	if (to !== config.irc_channels[1]) return;
 	msg = msg.split(' ');
-	if (msg[0] != '!nytsoi') return;
+	var cmd = msg[0];
 	msg.shift();
-	msg = msg.join(' ');
-	np(msg);
+	var arg = msg.join(' ').trim();
+	if (cmd == '!nytsoi' && private(from))
+		np(arg);
+	} else if (cmd == '!levytoive' && private(from)) {
+		levytoive(arg);
+	} else if (cmd == '!toive') {
+		toive(arg);
+	}
 });
 
 function ircmsg(to, msg) {
@@ -46,8 +53,26 @@ function ircmsg(to, msg) {
 }
 
 function np(song) {
-	if(nowplaying == song) return;
-	nowplaying = song;
+	if (!song) song = '';
+	song = song.trim();
+	if ( song == '' ) {
+		request({
+			url: config.np_url,
+		}, function (error, response, body) {
+			if (!error && response.statusCode === 200) {
+				if (body != '') {
+					console.log(body);
+					//sendnp(body);
+					lastsong == body;
+				}
+			}
+		});
+	} else if (song != lastsong) {
+		sendnp(song);
+	}
+}
+
+function sendnp(song) {
 	var msg = 'Nyt soi: '+song;
 	ircmsg(config.irc_channels[0], msg);
 	ircdmsg(config.irc_nick, msg);
@@ -76,35 +101,6 @@ setInterval(function () {
 		}
 	}
 }, 1000);
-
-mpd.on('ready', function() {
-	console.log('mpd ready');
-});
-mpd.on('system-player', function() {
-	mpd.sendCommand(cmd('status', []), function (err, msg) {
-		if (err) throw err;
-		console.log(msg);
-		if (msg.match(/state: play/m)) {
-			mpd.sendCommand(cmd('currentsong', []), function (err, msg) {
-				if (err) throw err;
-				var artist = '';
-				var title = '';
-				var amatch = msg.match(/^Artist: (.*)$/mi);
-				var tmatch = msg.match(/^Title: (.*)$/mi);
-				if (amatch !== null) {
-					artist = amatch[1];
-				}
-				if (tmatch !== null) {
-					title = tmatch[1];
-				}
-				np(artist+' - '+title);
-				console.log(amatch);					
-				console.log(tmatch);
-				console.log(msg);
-			});
-		}
-	});
-});
 
 express.get('/', function (req, res) {
 	res.sendFile(__dirname + '/index.html');
