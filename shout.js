@@ -57,7 +57,19 @@ function cmd(from, to, msg) {
 
 function toive(what, who, where, file) {
 	var when = new Date().toISOString();
-	fs.appendFile(file, '| '+when+' | %%'+who+'%% | %%'+where+'%% | %%'+what+'%% |\n');
+	fs.readFile(file, 'utf8', function (err, data) {
+		if (err) {
+			return console.log(err);
+		}
+		var newData = data.replace(/<\/sortable><\/searchtable>/g, '| '+when+' | %%'+who+'%% | %%'+where+'%% | %%'+what+'%% |\n</sortable></searchtable>');
+		fs.writeFile(file, newData, 'utf8', function (err) {
+			if (err) {
+				return console.log(err);
+			}
+		})
+		
+	});
+	//fs.appendFile(file, '| '+when+' | %%'+who+'%% | %%'+where+'%% | %%'+what+'%% |\n');
 }
 
 function ircmsg(to, msg) {
@@ -88,7 +100,7 @@ function np(song) {
 function sendnp(song) {
 	var msg = 'Nyt soi: '+song;
 	for (var i in config.public_channels) {
-		ircmsg(config.public_channels[i], msg);
+		irc.send('NOTICE', config.public_channels[i], msg);
 	}
 	ircdmsg(config.irc_nick, msg);
 	telemsg(config.irc_nick, msg);
