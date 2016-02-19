@@ -27,9 +27,7 @@ var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 var queue = [], users = {}, lastsong = '';
 
 function private(chan) {
-	console.log(config.private_channels);
 	for (var i in config.private_channels) {
-		console.log(config.private_channels[i].split(/ /)[0], chan.toLowerCase());
 		if (config.private_channels[i].split(/ /)[0] == chan.toLowerCase()) {
 			return true;
 		}
@@ -50,7 +48,7 @@ function cmd(from, to, msg) {
 		np(arg);
 	} else if (cmd == '!levytoive' && private(to)) {
 		toive(arg, from, to, config.levytoiveet);
-	} else if (cmd == '!toive' || (cmd == '/toive' && to == 'Telegram')) {
+	} else if (cmd == '!toive' || (cmd.match(/^\/toive(@ShoutboxBot)?$/) && to == 'Telegram')) {
 		toive(arg, from, to, config.biisitoiveet);
 	}
 }
@@ -99,11 +97,13 @@ function np(song) {
 
 function sendnp(song) {
 	var msg = 'Nyt soi: '+song;
+	var telemsg = 'Nyt soi: *'+song+'*';
 	for (var i in config.public_channels) {
 		irc.send('NOTICE', config.public_channels[i], msg);
 	}
 	ircdmsg(config.irc_nick, msg);
-	telemsg(config.irc_nick, msg);
+	bot.sendMessage(groupId, telemsg, { parse_mode: 'Markdown' });
+	//telemsg(config.irc_nick, msg);
 	socketmsg(config.irc_nick, msg);
 	logmsg(config.irc_nick, msg);
 	io.emit('np', { song: song });
@@ -216,7 +216,7 @@ ircd.listen(config.ircd_port, function () {
 });
 
 bot.on('message', function (msg) {
-	if (!msg.text || msg.text.match(/^\//)) return;
+	if (!msg.text) return;
 	if (msg.chat.id != groupId) return;
 	if (spam(msg.from.id, msg.text)) return;
 	cmd(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
