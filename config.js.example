@@ -13,7 +13,8 @@ var config = {
 	irc_port: 6667,
 	private_channels: ['#foo', '#bar'],
 	public_channels: ['#secret key'],
-	np_url: ''
+	np_url: '',
+	secret: ''
 };
 
 module.exports = config;

@@ -37,7 +37,12 @@ function private(chan) {
 
 irc.addListener('message', function (from, to, msg) {
 	cmd(from, to, msg);
+	feed(from, to, msg);
 });
+
+function feed(from, to, msg) {
+	io.to('info').emit('feed', { from: from, to: to, msg: msg, private: private(to) });
+}
 
 function cmd(from, to, msg) {
 	msg = msg.trim().split(' ');
@@ -133,15 +138,25 @@ express.get('/', function (req, res) {
 	res.sendFile(__dirname + '/index.html');
 });
 
+express.get('/info', function (req, res) {
+	res.sendFile(__dirname + '/info.html');
+});
+
 io.on('connection', function (socket) {
 	socket.on('msg', function (msg) {
 		if (spam(socket.client.id, msg.text)) return;
 		cmd(msg.nick, 'Shoutbox', msg.text);
+		feed(msg.nick, 'Shoutbox', msg.text);
 		ircdmsg(msg.nick, msg.text);
 		telemsg(msg.nick, msg.text);
 		socketmsg(msg.nick, msg.text);
 		logmsg(msg.nick, msg.text);
 		console.log(msg.nick, msg.text);
+	});
+	socket.on('info', function (info) {
+		if (info.secret == config.secret) {
+			socket.join('info');
+		}
 	});
 	for (var i in queue) {
 		socket.emit('msg', queue[i]);
@@ -167,7 +182,7 @@ function ircdmsg(nick, msg, id) {
 }
 
 function telemsg(nick, msg) {
-	//bot.sendMessage(groupId, '<'+nick+'> '+msg);
+	bot.sendMessage(groupId, '<'+nick+'> '+msg);
 }
 
 function socketmsg(nick, msg) {
@@ -195,6 +210,7 @@ ircd.listen(config.ircd_port, function () {
 			if (target.match(/^#shoutbox$/i)) {
 				if (spam(connection.mask, message)) return;
 				cmd(connection.nickname, '#shoutbox', message);
+				feed(connection.nickname, '#shoutbox', message);
 				telemsg(connection.nickname, message);
 				socketmsg(connection.nickname, message);
 				ircdmsg(connection.nickname, message, connection.id);
@@ -220,6 +236,7 @@ bot.on('message', function (msg) {
 	if (msg.chat.id != groupId) return;
 	if (spam(msg.from.id, msg.text)) return;
 	cmd(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
+	feed(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
 	ircdmsg(msg.from.username || msg.from.first_name, msg.text);
 	socketmsg(msg.from.username || msg.from.first_name, msg.text);
 	logmsg(msg.from.username || msg.from.first_name, msg.text);
