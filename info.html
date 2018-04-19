@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='refresh' content='14400'>
+<meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'>
+<title>Wappuradion inforuutu</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: white; }
+.msg { background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; }
+.msg.toive { background: #080; color: #fff; }
+.msg.toive.text { font-weight: bold; }
+.msg.hilight { background: #f55; color: #000; }
+.msg.hilight .text { font-weight: bold; font-size: 1.5em; }
+.nick { font-weight: bold; float: left; margin-right: 15px; }
+.to { font-size: 0.7em; line-height: 1.8em; }
+.time { float: right; font-size: 0.7em; padding: 2px 2px 0 0; }
+.slot { float: left; color: lightgreen; }
+#bar { width: 52%; height: 0.4%; position: absolute; top: 49.8%; left: 15%; background: #555; }
+#private { width: 51.2%; height: 49.5%; overflow: hidden; position: absolute; top: 0; left: 15%; background: #000; }
+#public { width: 51.2%; height: 49.5%; overflow: hidden; position: absolute; bottom: 0; left: 15%; background: #000; }
+#toive { width: 15%; height: 100%; overflow: hidden; position: absolute; bottom: 0; left: 0; background: #000; border-right: 5px solid #555; }
+#program { width: 33.5%; height: 40%; overflow: hidden; position: absolute; top: 0; right: 0; background: #000; font-size: 1.25em; white-space: nowrap; padding-left: 10px; font-weight: bold; color: #ccc; padding-top: 3px; }
+#song { width: 33.5%; height: 19%; overflow: hidden; position: absolute; top: 40.5%; right: 0; background: #000; color: #fff; }
+#info { width: 33.5%; height: 40%; overflow: hidden; position: absolute; bottom: 0; right: 0; background: #000; padding: 0 10px; color: #fddb78; }
+#date { font-size: 3em; text-align: center; font-weight: bold; line-height: 1.5em; }
+#np { font-size: 2em; text-align: center; line-height: 0.95em; white-space: nowrap; color: #6688fe; }
+#ads { width: 33.5%; height: 10%; overflow: hidden; position: absolute; top: 49.5%; right: 0; display: none; text-align: center; font-size: 3em; font-weight: bold; line-height: 1.7em;}
+.ads #ads.ding { display: block; background: red; color: white; }
+.ads #ads.dong { display: block; background: white; color: red; }
+#mikit { width: 100%; height: 20%; position: absolute; top: 0; left: 0; z-align: 123}
+</style>
+</head>
+<body>
+<div id='private'></div>
+<div id='public'></div>
+<div id='program'></div>
+<div id='toive'></div>
+<div id='song'><div id='date'></div><div id='np'></div></div>
+<div id='info'></div>
+<div id='bar'></div>
+<div id='ads' class='ding'>MAINOSKATKO</div>
+<!--iframe id='mikit' src='http://10.1.0.55:1337/' width='100%' height='15%' scrolling="false"></iframe-->
+<script src="//cdn.socket.io/socket.io-1.3.7.js"></script>
+<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/showdown/1.3.0/showdown.min.js"></script>
+<script>
+$(function() {
+var secret = window.location.hash.substring(1);
+function updateprog() {
+	$.getJSON('//wappuradio.fi/api/programs', function(ok) {
+		$('#program').html('');
+		ok.sort(function (a, b) {
+			if (moment(a.start) < moment(b.start)) return -1;
+			if (moment(a.start) > moment(b.start)) return 1;
+			return 0;
+		});
+		var now = +new Date();
+		for (var i in ok) {
+			if (moment(ok[i].end) > now) {
+				$('#program').append('<div class="program"><div class="slot">'+moment(ok[i].start).format('HH:mm')+' &nbsp;</div><div class="title">'+ok[i].title+'</div></div>');
+			}
+		}
+	});
+}
+updateprog();
+setInterval(updateprog, 60000);
+function updatetime() {
+	var date = moment().format('DD.MM. HH:mm:ss');
+	$('#date').html(date);
+}
+setInterval(updatetime, 1000);
+function updatenp() {
+	$.get('//wappuradio.fi/api/nowplaying-warmup', function(np) {
+		$('#np').html(np.replace(/ - /, '<br>'));
+	});
+}
+updatenp();
+setInterval(updatenp, 5000);
+function updateinfo() {
+	if(secret == '') return;
+	$.get('//wappuradio.fi/'+secret+'.md', function(data) {
+		console.log(data);
+		var converter = new showdown.Converter({noHeaderId: true});
+		var html = converter.makeHtml(data);
+		html = html.split('<hr />');
+		html.shift();
+		html = html.join('<br>');
+		$('#info').html(html);
+	});
+}
+updateinfo();
+setInterval(updateinfo, 30000);
+function updateads() {
+	var ads = false;
+	var now = new Date();
+	var h = now.getHours();
+	var m = now.getMinutes();
+	var d = now.getDay();	
+	if(h == 6 && m == 45) ads = true;
+	if(h >= 7 && h <= 18) if(m == 0 || m == 30) ads = true;
+	//if(h == 19 && m == 0) ads = true;
+	if(h == 22 && m == 0) ads = true;
+	if(h == 23 && m == 0) ads = true;
+	if(h == 0 && m == 0) ads = true;
+	if(h == 1 && m == 0) ads = true;
+	if(d > 5 && h > 1) ads = false;
+	if(ads) {
+		$('body').addClass('ads');
+		$('#ads').toggleClass('ding');
+		$('#ads').toggleClass('dong');
+	} else {
+		$('body').removeClass('ads');
+	}
+}
+updateads();
+setInterval(updateads, 333);
+function color(str) {
+	for (var i = 0, hash = 0; i < str.length; hash = str.charCodeAt(i++) + ((hash << 5) - hash));
+	for (var i = 0, color = "#"; i < 3; color += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2));
+	return color;
+}
+var hilight = ['mikit', 'toimitus', 'tuottaja', 'tissit', 'toimittaja'];
+var socket = io();
+socket.emit('info', { secret: secret });
+socket.on('feed', function (msg) {
+	console.log(msg);
+	var date = new Date();
+	var hour = date.getHours();
+	var min = date.getMinutes();
+	if(min < 10) min = '0'+min;
+	var time = hour+':'+min;
+	msg.nick = msg.from.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	msg.text = msg.msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	var classes = '';
+	if(msg.text.match(/^[!\/]toive/)) classes += ' toive';
+	if(1||msg.private) { 
+		for(var i = 0; i < hilight.length; i++) {
+			if(msg.text.indexOf(hilight[i]) >= 0) classes += ' hilight';
+		}
+	}
+	var line = '<div class="msg'+classes+'"><div class="time">'+time+'</div><div class="nick" style="color: '+color(msg.nick)+'">'+msg.nick+'</div><div class="to">'+msg.to+'</div><div class="text">'+msg.text+'</div></div>';
+	if(msg.private) { 
+		if(msg.to == '#radiontoimitus') $('#private').append(line)
+	}
+	else $('#public').append(line);
+	if(msg.text.match(/^[!\/]toive/)) $('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
+	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
+	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
+	$('#toive').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
+});
+});
+</script>
+</body>
+</html>

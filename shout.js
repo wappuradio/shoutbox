@@ -21,10 +21,12 @@ var request = require('request');
 
 var Irc = require('irc');
 var irc = new Irc.Client(config.irc_host, config.irc_nick, {
+	userName: config.irc_user,
+	realName: config.irc_name,
 	channels: config.public_channels.concat(config.private_channels)
 });
 
-var queue = [], users = {}, lastsong = '';
+var queue = [], users = {}, lastsong = '', lasttime;
 
 function private(chan) {
 	for (var i in config.private_channels) {
@@ -70,7 +72,6 @@ function toive(what, who, where, file) {
 				return console.log(err);
 			}
 		})
-		
 	});
 	//fs.appendFile(file, '| '+when+' | %%'+who+'%% | %%'+where+'%% | %%'+what+'%% |\n');
 }
@@ -91,12 +92,16 @@ function np(song) {
 					console.log(body);
 					sendnp(body);
 					lastsong = body;
+					var now = new Date();
+					lasttime = now.toISOString();
 				}
 			}
 		});
 	} else if (song != lastsong) {
 		sendnp(song);
 		lastsong = song;
+		var now = new Date();
+		lasttime = now.toISOString();
 	}
 }
 
@@ -142,9 +147,15 @@ express.get('/info', function (req, res) {
 	res.sendFile(__dirname + '/info.html');
 });
 
+express.get('/np', function (req, res) {
+	res.setHeader('Content-Type', 'application/json');
+	res.send(JSON.stringify({ song: lastsong, timestamp: lasttime }));
+});
+
 io.on('connection', function (socket) {
-	socket.on('msg', function (msg) {
+	/*socket.on('msg', function (msg) {
 		if (spam(socket.client.id, msg.text)) return;
+		if(msg.nick.length > 20) { return; }
 		cmd(msg.nick, 'Shoutbox', msg.text);
 		feed(msg.nick, 'Shoutbox', msg.text);
 		ircdmsg(msg.nick, msg.text);
@@ -152,7 +163,7 @@ io.on('connection', function (socket) {
 		socketmsg(msg.nick, msg.text);
 		logmsg(msg.nick, msg.text);
 		console.log(msg.nick, msg.text);
-	});
+	});*/
 	socket.on('info', function (info) {
 		if (info.secret == config.secret) {
 			socket.join('info');
@@ -235,6 +246,7 @@ bot.on('message', function (msg) {
 	if (!msg.text) return;
 	if (msg.chat.id != groupId) return;
 	if (spam(msg.from.id, msg.text)) return;
+        if (msg.from.username.length > 20) { return; }
 	cmd(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
 	feed(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
 	ircdmsg(msg.from.username || msg.from.first_name, msg.text);
