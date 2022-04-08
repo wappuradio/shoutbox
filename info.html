@@ -8,7 +8,7 @@
 <style>
 * { box-sizing: border-box; }
 body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: white; }
-.msg { background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; }
+.msg { background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; font-size: 1.5em; }
 .msg.toive { background: #080; color: #fff; }
 .msg.toive.text { font-weight: bold; }
 .msg.hilight { background: #f55; color: #000; }
@@ -38,7 +38,9 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 <div id='program'></div>
 <div id='toive'></div>
 <div id='song'><div id='date'></div><div id='np'></div></div>
-<div id='info'></div>
+<div id='info'>
+<iframe id='tekniikka' width="100%" height="100%" src="https://www.youtube.com/embed/TKnT6vvU6B8?autoplay=1&mute=1" title="YouTube video player" frameborder="0" allow="autoplay;" allowfullscreen></iframe>
+</div>
 <div id='bar'></div>
 <div id='ads' class='ding'>MAINOSKATKO</div>
 <!--iframe id='mikit' src='http://10.1.0.55:1337/' width='100%' height='15%' scrolling="false"></iframe-->
@@ -98,15 +100,16 @@ function updateads() {
 	var now = new Date();
 	var h = now.getHours();
 	var m = now.getMinutes();
-	var d = now.getDay();	
-	if(h == 6 && m == 45) ads = true;
+	var d = now.getDay();
+	//if((h == 7 || h == 9 || h == 11 || h == 13 || h == 15 || h == 17) && m == 0) ads = true;
+	//if(h == 6 && m == 45) ads = true;
 	if(h >= 7 && h <= 18) if(m == 0 || m == 30) ads = true;
 	//if(h == 19 && m == 0) ads = true;
-	if(h == 22 && m == 0) ads = true;
-	if(h == 23 && m == 0) ads = true;
-	if(h == 0 && m == 0) ads = true;
-	if(h == 1 && m == 0) ads = true;
-	if(d > 5 && h > 1) ads = false;
+	//if(h == 22 && m == 0) ads = true;
+	//if(h == 23 && m == 0) ads = true;
+	//if(h == 0 && m == 0) ads = true;
+	//if(h == 1 && m == 0) ads = true;
+	if(d > 5) ads = false;
 	if(ads) {
 		$('body').addClass('ads');
 		$('#ads').toggleClass('ding');
@@ -122,7 +125,7 @@ function color(str) {
 	for (var i = 0, color = "#"; i < 3; color += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2));
 	return color;
 }
-var hilight = ['mikit', 'toimitus', 'tuottaja', 'tissit', 'toimittaja'];
+var hilight = ['mikit', 'toimitus', 'tuottaja', 'toimittaja'];
 var socket = io();
 socket.emit('info', { secret: secret });
 socket.on('feed', function (msg) {
@@ -132,18 +135,25 @@ socket.on('feed', function (msg) {
 	var min = date.getMinutes();
 	if(min < 10) min = '0'+min;
 	var time = hour+':'+min;
-	msg.nick = msg.from.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-	msg.text = msg.msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	var classes = '';
-	if(msg.text.match(/^[!\/]toive/)) classes += ' toive';
+	if(msg.msg.match(/^[!\/]toive/)) classes += ' toive';
 	if(1||msg.private) { 
 		for(var i = 0; i < hilight.length; i++) {
-			if(msg.text.indexOf(hilight[i]) >= 0) classes += ' hilight';
+			if(msg.msg.indexOf(hilight[i]) >= 0) classes += ' hilight';
 		}
 	}
+	if(msg.from == 'Wappuli') {
+		var match = msg.msg.match(/<([^>]*)> (.*)/);
+		if(match !== null) {
+			msg.from = match[1].replace(/[^A-Za-zÅÄÖåäö]/g, '');
+			msg.msg = match[2];
+		}
+	}
+	msg.nick = msg.from.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	msg.text = msg.msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	var line = '<div class="msg'+classes+'"><div class="time">'+time+'</div><div class="nick" style="color: '+color(msg.nick)+'">'+msg.nick+'</div><div class="to">'+msg.to+'</div><div class="text">'+msg.text+'</div></div>';
 	if(msg.private) { 
-		if(msg.to == '#radiontoimitus') $('#private').append(line)
+		if(msg.to.match(/radiontoimitus/)) $('#private').append(line)
 	}
 	else $('#public').append(line);
 	if(msg.text.match(/^[!\/]toive/)) $('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
