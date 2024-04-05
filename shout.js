@@ -7,13 +7,6 @@ var token = config.token;
 var bot = new TelegramBot(token, {polling: true});
 var groupId = config.group;
 
-/*var ircdkit = require('ircdkit');
-var ircd = ircdkit({
-	hostname: config.hostname,
-	requireNickname: true,
-	maxNickLength: 15
-});*/
-
 var express = require('express')();
 var http = require('http').Server(express);
 var io = require('socket.io')(http);
@@ -75,7 +68,6 @@ function toive(what, who, where, file) {
 			}
 		})
 	});
-	//fs.appendFile(file, '| '+when+' | %%'+who+'%% | %%'+where+'%% | %%'+what+'%% |\n');
 }
 
 function ircmsg(to, msg) {
@@ -113,9 +105,7 @@ function sendnp(song) {
 	for (var i in config.public_channels) {
 		irc.send('NOTICE', config.public_channels[i], msg);
 	}
-	//ircdmsg(config.irc_nick, msg);
 	bot.sendMessage(groupId, telemsg, { parse_mode: 'Markdown' });
-	//telemsg(config.irc_nick, msg);
 	socketmsg(config.irc_nick, msg);
 	logmsg(config.irc_nick, msg);
 	io.emit('np', { song: song });
@@ -171,17 +161,6 @@ express.all('/', function (req, res, next) {
 });
 
 io.on('connection', function (socket) {
-	/*socket.on('msg', function (msg) {
-		if (spam(socket.client.id, msg.text)) return;
-		if(msg.nick.length > 20) { return; }
-		cmd(msg.nick, 'Shoutbox', msg.text);
-		feed(msg.nick, 'Shoutbox', msg.text);
-		ircdmsg(msg.nick, msg.text);
-		telemsg(msg.nick, msg.text);
-		socketmsg(msg.nick, msg.text);
-		logmsg(msg.nick, msg.text);
-		console.log(msg.nick, msg.text);
-	});*/
 	socket.on('info', function (info) {
 		if (info.secret == config.secret) {
 			socket.join('info');
@@ -219,48 +198,6 @@ function socketmsg(nick, msg) {
 	io.emit('msg', { nick: nick, text: msg });
 }
 
-/*ircd.listen(config.ircd_port, function () {
-	ircd.on('connection', function (connection) {
-		connection.on('authenticated', function () {
-			console.log(connection.mask, 'connected');
-		});
-		connection.on('disconnected', function () {
-			console.log(connection.mask, 'disconnected');
-		});
-		connection.on('end', function () {
-			console.log(connection.mask, 'ended');
-		});
-		connection.on('closing', function () {
-			console.log(connection.mask, 'closing');
-		});
-		connection.on('error', function (error) {
-			console.log(connection.mask, error);
-		});
-		connection.on('PRIVMSG', function (target, message) {
-			if (target.match(/^#shoutbox$/i)) {
-				if (spam(connection.mask, message)) return;
-				cmd(connection.nickname, '#shoutbox', message);
-				feed(connection.nickname, '#shoutbox', message);
-				telemsg(connection.nickname, message);
-				socketmsg(connection.nickname, message);
-				ircdmsg(connection.nickname, message, connection.id);
-				logmsg(connection.nickname, message);
-			}
-		});
-		connection.on('JOIN', function (target, foo) {
-			if(target.match(/^#shoutbox$/i)) {
-				for (var i in queue) {
-					var nick = queue[i].nick.replace(/[^A-Za-z0-9\-_\^`|]/g, '');
-					connection.send(':'+nick+'!'+nick.toLowerCase()+'@'+config.hostname+' PRIVMSG '+config.ircd_channel+' :'+queue[i].text);
-				}
-			}
-		});
-		connection.on('PING', function (target) {
-			connection.send('PONG '+target);
-		});
-	});
-});
-*/
 bot.on('message', function (msg) {
 	if (!msg.text) return;
 	if (msg.chat.id != groupId) return;
@@ -268,12 +205,9 @@ bot.on('message', function (msg) {
         if (msg.from.username.length > 20) { return; }
 	cmd(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
 	feed(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
-	//ircdmsg(msg.from.username || msg.from.first_name, msg.text);
 	socketmsg(msg.from.username || msg.from.first_name, msg.text);
 	logmsg(msg.from.username || msg.from.first_name, msg.text);
 });
-
-
 
 process.on('uncaughtException', function (er) {
 	console.error(er.stack)
