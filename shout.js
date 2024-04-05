@@ -202,7 +202,8 @@ bot.on('message', function (msg) {
 	if (!msg.text) return;
 	if (msg.chat.id != groupId) return;
 	if (spam(msg.from.id, msg.text)) return;
-        if (msg.from.username.length > 20) { return; }
+	if (msg.from.username && msg.from.username.length > 20) { return; }
+
 	cmd(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
 	feed(msg.from.username || msg.from.first_name, 'Telegram', msg.text);
 	socketmsg(msg.from.username || msg.from.first_name, msg.text);
