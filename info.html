@@ -8,7 +8,11 @@
 <style>
 * { box-sizing: border-box; }
 body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: white; }
-.msg { background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; font-size: 1.5em; }
+#public.irc .msg.irc {display: block;}
+#public.tg .msg.tg {display: block;}
+#private .msg{ display: block;}
+
+.msg { display: none; background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; font-size: 1.5em; }
 .msg.toive { background: #080; color: #fff; }
 .msg.toive.text { font-weight: bold; }
 .msg.hilight { background: #f55; color: #000; }
@@ -21,6 +25,12 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 #private { width: 51.2%; height: 49.5%; overflow: hidden; position: absolute; top: 0; left: 15%; background: #000; }
 #public { width: 51.2%; height: 49.5%; overflow: hidden; position: absolute; bottom: 0; left: 15%; background: #000; }
 #toive { width: 15%; height: 100%; overflow: hidden; position: absolute; bottom: 0; left: 0; background: #000; border-right: 5px solid #555; }
+#toive.half { height: 50%; bottom: 50%;}
+#vote { display: none; width: 15%; height: 50%; overflow: hidden; position: absolute; top:50%; bottom: 50%; left: 0; background: #000; border-right: 5px solid #555; }
+#vote.show {display: block;}
+#help { display: none; width: 15%; height: 50%; overflow: hidden; position: absolute; top:50%; bottom: 50%; left: 0; background: #000; border-right: 5px solid #555; }
+#help.show {display: block;}
+#help .title {color: #bbb; border-radius: 10px; width: 100px; padding: 5px; margin: 3px; background: #333; text-align: center;margin-left:auto;margin-right: auto; }
 #program { width: 33.5%; height: 40%; overflow: hidden; position: absolute; top: 0; right: 0; background: #000; font-size: 1.25em; white-space: nowrap; padding-left: 10px; font-weight: bold; color: #ccc; padding-top: 3px; }
 #song { width: 33.5%; height: 19%; overflow: hidden; position: absolute; top: 40.5%; right: 0; background: #000; color: #fff; }
 #info { width: 33.5%; height: 40%; overflow: hidden; position: absolute; bottom: 0; right: 0; background: #000; padding: 0 10px; color: #fddb78; }
@@ -30,13 +40,56 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 .ads #ads.ding { display: block; background: red; color: white; }
 .ads #ads.dong { display: block; background: white; color: red; }
 #mikit { width: 100%; height: 20%; position: absolute; top: 0; left: 0; z-align: 123}
+#msg-header { background: none; position: absolute; top: 0px; right: 0px;}
+#msg-header span {color: #bbb; border-radius: 10px; display: inline-block; width: 100px; padding: 5px; margin: 3px; background: #333; text-align: center;}
+#public.irc #msg-header-irc { background: #fff; color: #000; }
+#public.tg #msg-header-tg { background: #fff; color: #000; }
+
+#vote .title {color: #bbb; border-radius: 10px; width: 100px; padding: 5px; margin: 3px; background: #333; text-align: center;margin-left:auto;margin-right: auto; }
+#vote.running .title {color: #000; background: #fff;}
+#vote .vote { padding: 4px; }
+#vote .vote:nth-child(odd) { background: #555; }
+#vote .vote:nth-child(even) { background: #333; }
+
+table tr td {border: 2px solid grey; font-size: 12px;}
+
 </style>
 </head>
 <body>
 <div id='private'></div>
-<div id='public'></div>
+<div id='public' class="irc tg">
+	<div id='msg-header'><span id='msg-header-irc'>IRC</span><span id='msg-header-tg'>TELEGRAM</span></div>
+</div>
 <div id='program'></div>
-<div id='toive'></div>
+<div id='toive' class="half"></div>
+<div id='vote'>
+	<div class="title">Votes</div>
+</div>
+<div id='help' class="show">
+	<div class="title">Commands</div>
+	<table>
+		<tr><th>Command</th><th>What</th></tr>
+		<tr><td>!nytesiintyy name</td><td>New radio show starts. Clears previous setup & votes</td></tr>
+		<tr><td>!nytsoi name</td><td>Next song is playing. When given without name uses one currently playing</td></tr>
+		
+		<tr><td>!show irc</td><td>Shows irc</td></tr>
+		<tr><td>!hide irc</td><td>Hides irc</td></tr>
+		<tr><td>!show tg</td><td>Shows telegram</td></tr>
+		<tr><td>!hide irc</td><td>Hides telegram</td></tr>
+		
+		<tr><td>!votesong start</td><td>Starts song voting. Option vote stops on any song cmd.</td></tr>
+		<tr><td>!votesong stop</td><td>Stops song voting</td></tr>
+		<tr><td>!votesong reset</td><td>Clears votes</td></tr>
+		
+		<tr><td>!voteoptions start [option1,option2]</td><td>Starts option voting. Song vote stops on any song cmd</td></tr>
+		<tr><td>!voteoptions stop</td><td>Stops option voting</td></tr>
+		<tr><td>!voteoptions reset</td><td>Clears votes</td></tr>
+		
+		<tr><td>!vote value</td><td>Listeners voting command. When song voting user gives a score of 0-5. When option voting the option number is given. Votes can be updated by revoting.</td></tr>
+		
+	</table>
+</div>
+
 <div id='song'><div id='date'></div><div id='np'></div></div>
 <div id='info'>
 <iframe id='tekniikka' width="100%" height="100%" src="https://www.youtube.com/embed/TKnT6vvU6B8?autoplay=1&mute=1" title="YouTube video player" frameborder="0" allow="autoplay;" allowfullscreen></iframe>
@@ -50,6 +103,208 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 <script src="//cdnjs.cloudflare.com/ajax/libs/showdown/1.3.0/showdown.min.js"></script>
 <script>
 $(function() {
+/*****
+Info screen
+
+Admin commands, only available from toimitus:
+---------------------
+command     | description    | possible params                    | info
+-----------------------------------------------------------------------------------------------------------
+show        | Show component | 'irc', 'tg', 'vote'                | Shows components on info screen. Example: !show irc
+hide        | Hide component | 'irc', 'tg', 'vote'                | Hide components on info screen. Example: !hide irc
+nytesiintyy | New show starts| show name                          | In infoscreen context resets all show settings to default.
+nytsoi      | New song plays | optional songname                  | Advances current song vote counter by one. If name is given, that name is used. Otherwise index.
+votesong    | Control voting | 'start', 'stop', 'reset'           | Start or stop voting. Votes are reset only with 'reset'. Stop does not yet reset them.
+voteoption  | Control voting | 'start [options]', 'stop', 'reset' | Start or stop voting. Votes are reset only with 'reset'. Stop does not yet reset them.
+
+Viewer commands:
+---------------------
+command     | description      | possible params           | info
+------------------------------------------------------------------------------------------
+vote        | Vote for song    | number or "number number" | Vote for current song (1-5) or update vote for previous song (songnumber + 1-5).
+vote        | Vote for option  | number                    | Vote for given option. Example: !vote 3
+
+Vote command used depends on which votemode is on.
+
+*/	
+const commands = [
+	{
+		key: 'show', 
+		public:false, 
+		params: (p)=>p.split(" ")[0], 
+		validate: (p)=>['irc', 'tg', 'vote'].includes(p),
+		execute: (p)=>{
+			if(p==='irc') viewState.irc.display = true;
+			else if(p==='tg') viewState.telegram.display = true;
+			else if(p==='vote') viewState.vote.display = true;
+			updateViewState();
+		}
+	},
+	{
+		key: 'hide', 
+		public:false, 
+		params: (p)=>p.split(" ")[0], 
+		validate: (p)=>['irc', 'tg', 'vote'].includes(p),
+		execute: (p)=>{
+			if(p==='irc') viewState.irc.display = false;
+			else if(p==='tg') viewState.telegram.display = false;
+			else if(p==='vote') viewState.vote.display = false;
+			updateViewState();
+		}
+	},
+	{
+		key: 'nytesiintyy', 
+		public:false, 
+		params:()=>null, 
+		validate: (p)=>true,
+		execute: (p)=>{
+			viewState.irc.display = true;
+			viewState.telegram.display = true;
+			viewState.vote.display = false;
+			updateViewState();
+		}
+	},
+	{
+		key: 'nytsoi', 
+		public:false, 
+		params:p=>p, 
+		validate: (p)=>true,
+		execute: (p)=>{
+			if(viewState.vote.mode === 'music' && viewState.vote.running)
+			{
+				viewState.vote.votes.push({
+					song: (p && p.length>0) ? p : (viewState.vote.votes.length+1).toString(),
+					votes:[]
+				});
+				updateVotes();
+			}
+		}
+	},
+	{
+		key: 'votesong', 
+		public:false, 
+		params:p=>null, 
+		validate: (p)=>true,
+		execute: (p)=>{
+			const option = p.split(" ")[0];
+			viewState.vote.display = true;
+			if(viewState.vote.mode !== 'music')
+			{
+				viewState.vote.mode = 'music';
+				viewState.vote.votes = [];
+			}
+			if(option === 'start'){
+				viewState.vote.running = true;
+			}
+			else if(option === 'stop'){
+				viewState.vote.running = false;
+			}
+			else if(option === 'reset'){
+				viewState.vote.votes = [];
+			}
+			updateViewState();
+			updateVotes();
+		}
+	},
+	{
+		key: 'voteoptions', 
+		public:false, 
+		params:p=>null, 
+		validate: (p)=>true,
+		execute: (p)=>{
+			const option = p.split(" ")[0];
+			viewState.vote.display = true;
+			if(viewState.vote.mode !== 'option')
+			{
+				viewState.vote.mode = 'option';
+				viewState.vote.votes = [];
+				viewState.vote.options = ['No options provided', 'use !voteoptions start [option1,option2,etc]'];
+			}
+			if(option === 'start'){
+				viewState.vote.running = true;
+				if(p && p.length >2) viewState.vote.options = p.substring('start ['.length, p.length-1).split(",");
+				else viewState.vote.options = ['No options provided', 'use !voteoptions start [option1,option2,etc]'];
+			}
+			else if(option === 'stop'){
+				viewState.vote.running = false;
+			}
+			else if(option === 'reset'){
+				viewState.vote.votes = [];
+				viewState.vote.options = [];
+			}
+			updateViewState();
+			updateVotes();
+		}
+	},
+	// PUBLIC COMMANDS
+	{
+		key: 'vote', 
+		public:false, 
+		params:p=>null, 
+		validate: (p)=>p && p.length>0,
+		execute: (p, msg)=>{
+			if(!viewState.vote.running) return;
+			p = p.split(" ");
+			
+			if(viewState.vote.mode === 'music')
+			{
+				const index = (p.length > 1 ? parseInt(p[0]) : viewState.vote.votes.length)-1;
+				const max = viewState.vote.votes.length-1;
+				const score = p.length > 1 ? parseInt(p[1]) : parseInt(p[0]);
+				if(isNaN(index) || isNaN(score) || index <0 || index > max || score<0 || score>5) return;
+				const old = viewState.vote.votes[index].votes.find(v=>v.name === msg.from);
+				if(old) old.score = score;
+				else viewState.vote.votes[index].votes.push({name:msg.from, score});
+			}
+			else if(viewState.vote.mode === 'option')
+			{
+				const option = parseInt(p[0])-1;
+				const max = viewState.vote.options.length-1;
+				if(isNaN(option) || option <0 || option > max) return;
+				const old = viewState.vote.votes.find(v=>v.name === msg.from);
+				if(old) old.option = option;
+				else viewState.vote.votes.push({name:msg.from, option});
+			}
+			
+			
+			updateVotes();
+		}
+	},
+	
+];
+function getCommand(msg)
+{
+	const split = msg.split(" ");
+	const key = split.shift();
+	const params = split.join(" ");
+	return commands.find( c =>{
+		if(c.key === key && c.validate(params)) return c;
+	});
+}
+
+const viewState = {
+	irc: {
+		display:true,
+	},
+	telegram:{
+		display:true,
+	},
+	vote:{
+		display:false,
+		mode: 'music', // or 'option',
+		votes:[ 
+			// In music mode
+			//{song, votes:[{name,score}]}
+			// or
+			//{name, option}
+		],
+		options:[
+			//option1, option2 etc. In music mode empty
+		]
+		
+	}
+}
+
 var secret = window.location.hash.substring(1);
 function updateprog() {
 	$.getJSON('//wappuradio.fi/api/programs', function(ok) {
@@ -129,10 +384,66 @@ function color(str) {
 	for (var i = 0, color = "#"; i < 3; color += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2));
 	return color;
 }
+
+function updateViewState()
+{
+	if(viewState.irc.display) document.getElementById("public")?.classList.add("irc");
+	else document.getElementById("public")?.classList.remove("irc");
+	
+	if(viewState.telegram.display) document.getElementById("public")?.classList.add("tg");
+	else document.getElementById("public")?.classList.remove("tg");
+	
+	if(viewState.vote.display){
+		document.getElementById("vote")?.classList.add("show");
+		document.getElementById("help")?.classList.remove("show");
+	}
+	else{
+		document.getElementById("vote")?.classList.remove("show");
+		document.getElementById("help")?.classList.add("show");
+	} 
+	if(viewState.vote.running) document.getElementById("vote")?.classList.add("running");
+	else document.getElementById("vote")?.classList.remove("running");
+	
+}
+
+function updateVotes(){
+	const previous = document.getElementById("vote")?.getElementsByClassName("vote")
+	while(previous.length > 0) previous[0].remove();
+	if(viewState.vote.mode === 'music')
+	{
+		for(let i = 0; i < viewState.vote.votes.length; i++){
+			const v = viewState.vote.votes[i];
+			const div = document.createElement("div");
+			const avg = v.votes.length === 0 ? '-' : v.votes.map(v=>v.score).reduce((a,b)=>a+b,0)/v.votes.length;
+			div.innerHTML= `${i+1}. Points: ${avg} Votes: ${v.votes.length}<div>${v.song}</div>`;
+			div.className = "vote";
+			document.getElementById("vote")?.appendChild(div);
+		}
+	}
+	else if(viewState.vote.mode === 'option')
+	{
+		let options = [];
+		for(let i = 0; i < viewState.vote.options.length;i++){
+			options.push({name:viewState.vote.options[i], count:0});
+		}
+		for(let i = 0; i < viewState.vote.votes.length; i++){
+			const vote = viewState.vote.votes[i];
+			const o = options[vote.option];
+			if(o) o.count++;
+		}
+		for(let i = 0; i < options.length;i++){
+			const div = document.createElement("div");
+			div.innerHTML= `${i+1}. Votes: ${options[i].count}<div>${options[i].name}</div>`;
+			div.className = "vote";
+			document.getElementById("vote")?.appendChild(div);
+		}
+	}
+}
+
 var hilight = ['mikit', 'toimitus', 'tuottaja', 'toimittaja'];
 var socket = io();
 socket.emit('info', { secret: secret });
-socket.on('feed', function (msg) {
+const onMsg = function (msg) {
 	console.log(msg);
 	var date = new Date();
 	var hour = date.getHours();
@@ -146,25 +457,42 @@ socket.on('feed', function (msg) {
 			if(msg.msg.indexOf(hilight[i]) >= 0) classes += ' hilight';
 		}
 	}
+	let irc = false;
 	if(msg.from == 'Wappuli') {
+		irc = true;
+		classes += ' irc';
 		var match = msg.msg.match(/<([^>]*)> (.*)/);
 		if(match !== null) {
 			msg.from = match[1].replace(/[^A-Za-zÅÄÖåäö]/g, '');
 			msg.msg = match[2];
 		}
 	}
+	else classes += ' tg';
 	msg.nick = msg.from.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	msg.text = msg.msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	const cmd = msg.text.charAt(0) === '!' ? getCommand(msg.text.substring(1)) : undefined;
 	var line = '<div class="msg'+classes+'"><div class="time">'+time+'</div><div class="nick" style="color: '+color(msg.nick)+'">'+msg.nick+'</div><div class="to">'+msg.to+'</div><div class="text">'+msg.text+'</div></div>';
 	if(msg.private) { 
-		if(msg.to.match(/radiontoimitus/)) $('#private').append(line)
+		if(msg.to.match(/radiontoimitus/)){
+			irc = false;
+			$('#private').append(line);
+		}
 	}
 	else $('#public').append(line);
 	if(msg.text.match(/^[!\/]toive/)) $('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
 	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
 	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
 	$('#toive').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
-});
+	
+	// Run command
+	if( cmd && ( cmd.public || msg.private&&msg.to.match(/radiontoimitus/) )) {
+		const params = msg.text.split(" ");
+		params.shift();
+		cmd.execute(params.join(" "), msg);
+	}
+};
+socket.on('feed', onMsg);
+window.testCmd = (msg, from, to, private) => onMsg({msg,from, to,private});
 });
 </script>
 </body>
