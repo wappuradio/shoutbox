@@ -61,11 +61,11 @@ table tr td {border: 2px solid grey; font-size: 12px;}
 	<div id='msg-header'><span id='msg-header-irc'>IRC</span><span id='msg-header-tg'>TELEGRAM</span></div>
 </div>
 <div id='program'></div>
-<div id='toive' class="half"></div>
+<div id='toive'></div>
 <div id='vote'>
 	<div class="title">Votes</div>
 </div>
-<div id='help' class="show">
+<div id='help' class="show" style="display: none;">
 	<div class="title">Commands</div>
 	<table>
 		<tr><th>Command</th><th>What</th></tr>
@@ -110,7 +110,7 @@ Admin commands, only available from toimitus:
 ---------------------
 command     | description    | possible params                    | info
 -----------------------------------------------------------------------------------------------------------
-show        | Show component | 'irc', 'tg', 'vote'                | Shows components on info screen. Example: !show irc
+show        | Show component | 'irc', 'tg', 'vote',               | Shows components on info screen. Example: !show irc
 hide        | Hide component | 'irc', 'tg', 'vote'                | Hide components on info screen. Example: !hide irc
 nytesiintyy | New show starts| show name                          | In infoscreen context resets all show settings to default.
 nytsoi      | New song plays | optional songname                  | Advances current song vote counter by one. If name is given, that name is used. Otherwise index.
