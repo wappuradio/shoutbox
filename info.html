@@ -239,7 +239,7 @@ const commands = [
 	// PUBLIC COMMANDS
 	{
 		key: 'vote', 
-		public:false, 
+		public:true, 
 		params:p=>null, 
 		validate: (p)=>p && p.length>0,
 		execute: (p, msg)=>{
@@ -290,6 +290,7 @@ const viewState = {
 		display:true,
 	},
 	vote:{
+		running: false,
 		display:false,
 		mode: 'music', // or 'option',
 		votes:[ 
@@ -304,6 +305,9 @@ const viewState = {
 		
 	}
 }
+const previousMessages = [];
+const previousMessagesPrivate = [];
+
 
 document.getElementById("msg-header-irc")?.addEventListener("click", ()=>{
 	viewState.irc.display = !viewState.irc.display;
@@ -486,9 +490,15 @@ const onMsg = function (msg) {
 		if(msg.to.match(/radiontoimitus/)){
 			irc = false;
 			$('#private').append(line);
+			previousMessagesPrivate.push(line);
+			while(previousMessagesPrivate.length > 10) previousMessagesPrivate.shift();
 		}
 	}
-	else $('#public').append(line);
+	else{
+		$('#public').append(line);
+		previousMessages.push(line);
+		while(previousMessages.length > 10) previousMessages.shift();
+	}
 	if(msg.text.match(/^[!\/]toive/)) $('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
 	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
 	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
@@ -500,9 +510,71 @@ const onMsg = function (msg) {
 		params.shift();
 		cmd.execute(params.join(" "), msg);
 	}
+	save();
 };
 socket.on('feed', onMsg);
+
+/*** Command for testing feed locally without any real communication **/
 window.testCmd = (msg, from, to, private) => onMsg({msg,from, to,private});
+
+
+/**
+ * Save & load for keeping data on refresg
+ */
+const load = ()=>{
+	try{
+		const data = JSON.parse(localStorage.getItem('shoutbox'));
+		mergeTo(viewState, data);
+		updateViewState();
+		updateVotes();
+		
+		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs'));
+		for(let i = 0; i < msgs.length; i++){
+			$("#public").append(msgs[i]);
+		}
+		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private'));
+		for(let i = 0; i < msgsP.length; i++){
+			$("#private").append(msgsP[i]);
+		}
+	}
+	catch(e){
+		console.log(e);
+	}
+}
+const save = ()=>{
+	try{
+		const data = JSON.stringify(viewState);
+		localStorage.setItem('shoutbox', data);
+		
+		localStorage.setItem('shoutbox-msgs', JSON.stringify(previousMessages));
+		localStorage.setItem('shoutbox-msgs-private', JSON.stringify(previousMessagesPrivate));
+	}
+	catch(e){
+		console.log(e);
+	}
+}
+
+function mergeTo(to,from = {})
+{
+    for(t in from){
+        if(Reflect.has(to,t)){
+            const toV = Reflect.get(to,t);
+            const v = Reflect.get(from, t);
+            if(Array.isArray(toV)){
+                const va = v;
+                for(let i = 0; i < va.length; i++){
+                    if(typeof toV[i] === "object") mergeTo(toV[i], va[i]);
+                    else toV[i] = va[i];
+                }
+            }
+            else if(typeof toV === "object") mergeTo(toV, v);
+            else Reflect.set(to, t, Reflect.get(from, t));
+        }
+    }
+}
+
+load();
+
 });
 </script>
 </body>
