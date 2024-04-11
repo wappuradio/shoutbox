@@ -531,11 +531,15 @@ const load = ()=>{
 		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs'));
 		for(let i = 0; i < msgs.length; i++){
 			$("#public").append(msgs[i]);
+			previousMessages.push(msgs[i]);
 		}
 		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private'));
 		for(let i = 0; i < msgsP.length; i++){
 			$("#private").append(msgsP[i]);
+			previousMessagesPrivate.push(msgsP[i]);
 		}
+		$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
+		$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
 	}
 	catch(e){
 		console.log(e);
