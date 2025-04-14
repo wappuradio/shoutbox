@@ -15,7 +15,7 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 .msg { display: none; background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; font-size: 1.5em; }
 .msg.toive { display: block; background: #080; color: #fff; }
 .msg.toive.text { font-weight: bold; }
-.msg.hilight { background: #f55; color: #000; }
+.msg.hilight { background: #f55; color: #000; display: block !important; }
 .msg.hilight .text { font-weight: bold; font-size: 1.5em; }
 .nick { font-weight: bold; float: left; margin-right: 15px; }
 .to { font-size: 0.7em; line-height: 1.8em; }
@@ -410,14 +410,19 @@ function updateViewState()
 	if(viewState.vote.display){
 		document.getElementById("vote")?.classList.add("show");
 		document.getElementById("help")?.classList.remove("show");
+		document.getElementById("toive")?.classList.add("half");
 	}
 	else{
 		document.getElementById("vote")?.classList.remove("show");
 		document.getElementById("help")?.classList.add("show");
+		document.getElementById("toive")?.classList.remove("half");
 	} 
 	if(viewState.vote.running) document.getElementById("vote")?.classList.add("running");
 	else document.getElementById("vote")?.classList.remove("running");
 	
+	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 10);
+	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 10);
+	$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 10);
 }
 
 function updateVotes(){
@@ -472,7 +477,7 @@ const onMsg = function (msg) {
 		}
 	}
 	let irc = false;
-	if(msg.from == 'Wappuli') {
+	if(msg.from == 'Wappuli' || msg.to.includes("#wappuradio")) {
 		irc = true;
 		classes += ' irc';
 		var match = msg.msg.match(/<([^>]*)> (.*)/);
@@ -502,7 +507,7 @@ const onMsg = function (msg) {
 	if(msg.text.match(/^[!\/]toive/)) $('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
 	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
 	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
-	$('#toive').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
+	$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 500);
 	
 	// Run command
 	if( cmd && ( cmd.public || msg.private&&msg.to.match(/radiontoimitus/) )) {
@@ -523,17 +528,17 @@ window.testCmd = (msg, from, to, private) => onMsg({msg,from, to,private});
  */
 const load = ()=>{
 	try{
-		const data = JSON.parse(localStorage.getItem('shoutbox'));
+		const data = JSON.parse(localStorage.getItem('shoutbox') ?? {});
 		mergeTo(viewState, data);
 		updateViewState();
 		updateVotes();
 		
-		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs'));
+		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs') ?? []);
 		for(let i = 0; i < msgs.length; i++){
 			$("#public").append(msgs[i]);
 			previousMessages.push(msgs[i]);
 		}
-		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private'));
+		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private') ?? []);
 		for(let i = 0; i < msgsP.length; i++){
 			$("#private").append(msgsP[i]);
 			previousMessagesPrivate.push(msgsP[i]);
@@ -543,6 +548,8 @@ const load = ()=>{
 	}
 	catch(e){
 		console.log(e);
+		updateViewState();
+		updateVotes();
 	}
 }
 const save = ()=>{
