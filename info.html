@@ -307,6 +307,7 @@ const viewState = {
 }
 const previousMessages = [];
 const previousMessagesPrivate = [];
+const previousWishes = [];
 
 
 document.getElementById("msg-header-irc")?.addEventListener("click", ()=>{
@@ -504,7 +505,12 @@ const onMsg = function (msg) {
 		previousMessages.push(line);
 		while(previousMessages.length > 10) previousMessages.shift();
 	}
-	if(msg.text.match(/^[!\/]toive/)) $('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
+	if(msg.text.match(/^[!\/]toive/))
+	{
+		$('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
+		previousWishes.push(line);
+		while(previousWishes.length > 10) previousWishes.shift();
+	} 
 	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
 	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
 	$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 500);
@@ -543,8 +549,16 @@ const load = ()=>{
 			$("#private").append(msgsP[i]);
 			previousMessagesPrivate.push(msgsP[i]);
 		}
+		const wishes = JSON.parse(localStorage.getItem('shoutbox-wishes') ?? []);
+		for(let i = 0; i < wishes.length; i++){
+			$("#toive").append(msgsP[i]);
+			previousWishes.push(msgsP[i]);
+		}
+		
 		$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
 		$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
+		$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 500);
+	
 	}
 	catch(e){
 		console.log(e);
@@ -559,6 +573,8 @@ const save = ()=>{
 		
 		localStorage.setItem('shoutbox-msgs', JSON.stringify(previousMessages));
 		localStorage.setItem('shoutbox-msgs-private', JSON.stringify(previousMessagesPrivate));
+		localStorage.setItem('shoutbox-wishes', JSON.stringify(previousWishes));
+		
 	}
 	catch(e){
 		console.log(e);
