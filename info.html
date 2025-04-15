@@ -319,7 +319,6 @@ document.getElementById("msg-header-tg")?.addEventListener("click", ()=>{
 	updateViewState();
 });
 
-
 var secret = window.location.hash.substring(1);
 function updateprog() {
 	$.getJSON('//wappuradio.fi/api/programs', function(ok) {
@@ -463,8 +462,22 @@ function updateVotes(){
 var hilight = ['mikit', 'toimitus', 'tuottaja', 'toimittaja'];
 var socket = io();
 socket.emit('info', { secret: secret });
+
+// Socket keepalive
+let lastSocketMessage = Date.now();
+function checkReload()
+{
+	// If no data is received from socket.io in last 1 minutes and socket is disconnected, reload
+	if(!socket.connected && Date.now() - lastSocketMessage > 1 * 60 * 1_000)
+	{
+		location.reload();
+	}
+}
+setInterval(checkReload, 5 * 1_000)
+
+// Socket message handler
 const onMsg = function (msg) {
-	console.log(msg);
+	lastSocketMessage = Date.now();
 	var date = new Date();
 	var hour = date.getHours();
 	var min = date.getMinutes();
@@ -534,22 +547,22 @@ window.testCmd = (msg, from, to, private) => onMsg({msg,from, to,private});
  */
 const load = ()=>{
 	try{
-		const data = JSON.parse(localStorage.getItem('shoutbox') ?? {});
+		const data = JSON.parse(localStorage.getItem('shoutbox') ?? "{}");
 		mergeTo(viewState, data);
 		updateViewState();
 		updateVotes();
 		
-		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs') ?? []);
+		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs') ?? "[]");
 		for(let i = 0; i < msgs.length; i++){
 			$("#public").append(msgs[i]);
 			previousMessages.push(msgs[i]);
 		}
-		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private') ?? []);
+		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private') ?? "[]");
 		for(let i = 0; i < msgsP.length; i++){
 			$("#private").append(msgsP[i]);
 			previousMessagesPrivate.push(msgsP[i]);
 		}
-		const wishes = JSON.parse(localStorage.getItem('shoutbox-wishes') ?? []);
+		const wishes = JSON.parse(localStorage.getItem('shoutbox-wishes') ?? "[]");
 		for(let i = 0; i < wishes.length; i++){
 			$("#toive").append(msgsP[i]);
 			previousWishes.push(msgsP[i]);
