@@ -12,6 +12,7 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 #public.tg .msg.tg {display: block;}
 #private .msg{ display: block;}
 
+.msg.history { opacity: 0.8; }
 .msg { display: none; background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; font-size: 1.5em; }
 .msg.toive { display: block; background: #080; color: #fff; }
 .msg.toive.text { font-weight: bold; }
@@ -555,17 +556,20 @@ const load = ()=>{
 		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs') ?? "[]");
 		for(let i = 0; i < msgs.length; i++){
 			$("#public").append(msgs[i]);
+			$("#public").children().last().addClass("history");
 			previousMessages.push(msgs[i]);
 		}
 		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private') ?? "[]");
 		for(let i = 0; i < msgsP.length; i++){
 			$("#private").append(msgsP[i]);
+			$("#private").children().last().addClass("history");
 			previousMessagesPrivate.push(msgsP[i]);
 		}
 		const wishes = JSON.parse(localStorage.getItem('shoutbox-wishes') ?? "[]");
 		for(let i = 0; i < wishes.length; i++){
-			$("#toive").append(msgsP[i]);
-			previousWishes.push(msgsP[i]);
+			$("#toive").append(wishes[i]);
+			$("#toive").children().last().addClass("history");
+			previousWishes.push(wishes[i]);
 		}
 		
 		$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
