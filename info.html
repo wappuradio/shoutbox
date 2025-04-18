@@ -12,10 +12,11 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 #public.tg .msg.tg {display: block;}
 #private .msg{ display: block;}
 
+.msg.history { opacity: 0.8; }
 .msg { display: none; background: rgba(255,255,255,0.10); margin: 2px; border-radius: 2px; font-size: 1.5em; }
 .msg.toive { display: block; background: #080; color: #fff; }
 .msg.toive.text { font-weight: bold; }
-.msg.hilight { background: #f55; color: #000; }
+.msg.hilight { background: #f55; color: #000; display: block !important; }
 .msg.hilight .text { font-weight: bold; font-size: 1.5em; }
 .nick { font-weight: bold; float: left; margin-right: 15px; }
 .to { font-size: 0.7em; line-height: 1.8em; }
@@ -307,6 +308,7 @@ const viewState = {
 }
 const previousMessages = [];
 const previousMessagesPrivate = [];
+const previousWishes = [];
 
 
 document.getElementById("msg-header-irc")?.addEventListener("click", ()=>{
@@ -317,7 +319,6 @@ document.getElementById("msg-header-tg")?.addEventListener("click", ()=>{
 	viewState.telegram.display = !viewState.telegram.display;
 	updateViewState();
 });
-
 
 var secret = window.location.hash.substring(1);
 function updateprog() {
@@ -410,14 +411,19 @@ function updateViewState()
 	if(viewState.vote.display){
 		document.getElementById("vote")?.classList.add("show");
 		document.getElementById("help")?.classList.remove("show");
+		document.getElementById("toive")?.classList.add("half");
 	}
 	else{
 		document.getElementById("vote")?.classList.remove("show");
 		document.getElementById("help")?.classList.add("show");
+		document.getElementById("toive")?.classList.remove("half");
 	} 
 	if(viewState.vote.running) document.getElementById("vote")?.classList.add("running");
 	else document.getElementById("vote")?.classList.remove("running");
 	
+	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 10);
+	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 10);
+	$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 10);
 }
 
 function updateVotes(){
@@ -454,11 +460,25 @@ function updateVotes(){
 	}
 }
 
-var hilight = ['mikit', 'toimitus', 'tuottaja', 'toimittaja'];
+var hilight = ['mikit', 'toimitus', 'tuottaja', 'toimittaja', 'studio'];
 var socket = io();
 socket.emit('info', { secret: secret });
+
+// Socket keepalive
+let lastSocketMessage = Date.now();
+function checkReload()
+{
+	// If no data is received from socket.io in last 1 minutes and socket is disconnected, reload
+	if(!socket.connected && Date.now() - lastSocketMessage > 1 * 60 * 1_000)
+	{
+		location.reload();
+	}
+}
+setInterval(checkReload, 5 * 1_000)
+
+// Socket message handler
 const onMsg = function (msg) {
-	console.log(msg);
+	lastSocketMessage = Date.now();
 	var date = new Date();
 	var hour = date.getHours();
 	var min = date.getMinutes();
@@ -468,11 +488,11 @@ const onMsg = function (msg) {
 	if(msg.msg.match(/^[!\/]toive/)) classes += ' toive';
 	if(1||msg.private) { 
 		for(var i = 0; i < hilight.length; i++) {
-			if(msg.msg.indexOf(hilight[i]) >= 0) classes += ' hilight';
+			if(msg.msg.toLowerCase().indexOf(hilight[i]) >= 0) classes += ' hilight';
 		}
 	}
 	let irc = false;
-	if(msg.from == 'Wappuli') {
+	if(msg.from == 'Wappuli' || msg.to.includes("#wappuradio")) {
 		irc = true;
 		classes += ' irc';
 		var match = msg.msg.match(/<([^>]*)> (.*)/);
@@ -499,10 +519,15 @@ const onMsg = function (msg) {
 		previousMessages.push(line);
 		while(previousMessages.length > 10) previousMessages.shift();
 	}
-	if(msg.text.match(/^[!\/]toive/)) $('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
+	if(msg.text.match(/^[!\/]toive/))
+	{
+		$('#toive').append(line.replace(/[!\/]toive[^ ]*/, ''));
+		previousWishes.push(line);
+		while(previousWishes.length > 10) previousWishes.shift();
+	} 
 	$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
 	$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
-	$('#toive').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
+	$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 500);
 	
 	// Run command
 	if( cmd && ( cmd.public || msg.private&&msg.to.match(/radiontoimitus/) )) {
@@ -523,26 +548,39 @@ window.testCmd = (msg, from, to, private) => onMsg({msg,from, to,private});
  */
 const load = ()=>{
 	try{
-		const data = JSON.parse(localStorage.getItem('shoutbox'));
+		const data = JSON.parse(localStorage.getItem('shoutbox') ?? "{}");
 		mergeTo(viewState, data);
 		updateViewState();
 		updateVotes();
 		
-		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs'));
+		const msgs = JSON.parse(localStorage.getItem('shoutbox-msgs') ?? "[]");
 		for(let i = 0; i < msgs.length; i++){
 			$("#public").append(msgs[i]);
+			$("#public").children().last().addClass("history");
 			previousMessages.push(msgs[i]);
 		}
-		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private'));
+		const msgsP = JSON.parse(localStorage.getItem('shoutbox-msgs-private') ?? "[]");
 		for(let i = 0; i < msgsP.length; i++){
 			$("#private").append(msgsP[i]);
+			$("#private").children().last().addClass("history");
 			previousMessagesPrivate.push(msgsP[i]);
 		}
+		const wishes = JSON.parse(localStorage.getItem('shoutbox-wishes') ?? "[]");
+		for(let i = 0; i < wishes.length; i++){
+			$("#toive").append(wishes[i]);
+			$("#toive").children().last().addClass("history");
+			previousWishes.push(wishes[i]);
+		}
+		
 		$('#private').stop().animate({ scrollTop: $('#private')[0].scrollHeight }, 500);
 		$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
+		$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 500);
+	
 	}
 	catch(e){
 		console.log(e);
+		updateViewState();
+		updateVotes();
 	}
 }
 const save = ()=>{
@@ -552,6 +590,8 @@ const save = ()=>{
 		
 		localStorage.setItem('shoutbox-msgs', JSON.stringify(previousMessages));
 		localStorage.setItem('shoutbox-msgs-private', JSON.stringify(previousMessagesPrivate));
+		localStorage.setItem('shoutbox-wishes', JSON.stringify(previousWishes));
+		
 	}
 	catch(e){
 		console.log(e);
