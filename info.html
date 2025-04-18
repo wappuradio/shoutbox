@@ -41,10 +41,15 @@ body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: 
 .ads #ads.ding { display: block; background: red; color: white; }
 .ads #ads.dong { display: block; background: white; color: red; }
 #mikit { width: 100%; height: 20%; position: absolute; top: 0; left: 0; z-align: 123}
-#msg-header { background: none; position: fixed; bottom: 46.5%; left: 55%;}
-#msg-header span {cursor: pointer; user-select: none; color: #bbb; border-radius: 10px; display: inline-block; width: 100px; padding: 5px; margin: 3px; background: #333; text-align: center;}
+#msg-header { z-index: 999; background: none; position: fixed; bottom: 46.5%; left: 52.5%;}
+#msg-header span {text-indent: 6px; position: relative; cursor: pointer; user-select: none; color: #bbb; border-radius: 10px; display: inline-block; width: 128px; padding: 5px; margin: 3px; background: #333; text-align: center;}
 #public.irc #msg-header-irc { background: #fff; color: #000; }
 #public.tg #msg-header-tg { background: #fff; color: #000; }
+#public.irc #msg-header-irc::after { position: absolute; content: "⏺"; left: 0px; top: 2px; color: green; }
+#public.tg #msg-header-tg::after { position: absolute; content: "⏺"; left: 0px; top: 2px; color: green;}
+.offline #public.irc #msg-header-irc::after { position: absolute; content: "⏺"; left: 0px; top: 2px; color: red; }
+.offline #public.tg #msg-header-tg::after { position: absolute; content: "⏺"; left: 0px; top: 2px; color: red;}
+
 
 #vote .title {color: #bbb; border-radius: 10px; width: 100px; padding: 5px; margin: 3px; background: #333; text-align: center;margin-left:auto;margin-right: auto; }
 #vote.running .title {color: #000; background: #fff;}
@@ -246,7 +251,9 @@ const commands = [
 		execute: (p, msg)=>{
 			if(!viewState.vote.running) return;
 			p = p.split(" ");
-			
+			voteValidationHistory.push(msg);
+			// Limit votes just in case someone leaves votes running.
+			while(voteValidationHistory.length>10_000) voteValidationHistory.shift();
 			if(viewState.vote.mode === 'music')
 			{
 				const index = (p.length > 1 ? parseInt(p[0]) : viewState.vote.votes.length)-1;
@@ -297,7 +304,7 @@ const viewState = {
 		votes:[ 
 			// In music mode
 			//{song, votes:[{name,score}]}
-			// or
+			// or in options
 			//{name, option}
 		],
 		options:[
@@ -309,7 +316,12 @@ const viewState = {
 const previousMessages = [];
 const previousMessagesPrivate = [];
 const previousWishes = [];
-
+let voteValidationHistory = [];
+// Allow console access to data to allow easy data extraction
+window.shoutbox = {
+	viewState,
+	voteValidationHistory,
+}
 
 document.getElementById("msg-header-irc")?.addEventListener("click", ()=>{
 	viewState.irc.display = !viewState.irc.display;
@@ -468,6 +480,9 @@ socket.emit('info', { secret: secret });
 let lastSocketMessage = Date.now();
 function checkReload()
 {
+	// TODO - track offline/online status per context on backend side?
+	if(socket.connected) $("body").removeClass("offline");
+	else $("body").addClass("offline");
 	// If no data is received from socket.io in last 1 minutes and socket is disconnected, reload
 	if(!socket.connected && Date.now() - lastSocketMessage > 1 * 60 * 1_000)
 	{
@@ -576,6 +591,7 @@ const load = ()=>{
 		$('#public').stop().animate({ scrollTop: $('#public')[0].scrollHeight }, 500);
 		$('#toive').stop().animate({ scrollTop: $('#toive')[0].scrollHeight }, 500);
 	
+		voteValidationHistory = JSON.parse(localStorage.getItem('shoutbox-votes') ?? "[]");
 	}
 	catch(e){
 		console.log(e);
