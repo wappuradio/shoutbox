@@ -378,7 +378,7 @@ function updateads() {
 	if(h >= 7 && h <= 18) if(m == 0 || m == 30) ads = true;
 
         // Not on weekends
-	if(d > 5) ads = false;
+	if(d === 0 || d === 6) ads = false;
 
         // Not on special dates
         if (no_ads_on.indexOf(date) >= 0) ads = false;
