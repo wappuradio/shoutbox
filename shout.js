@@ -101,11 +101,11 @@ function np(song) {
 
 function sendnp(song) {
 	var msg = 'Nyt soi: '+song;
-	var telemsg = 'Nyt soi: *'+song+'*';
+	var telemsg = 'Nyt soi: <strong>'+song.replace(/</g, "&lt;")+'</strong>';
 	for (var i in config.public_channels) {
 		irc.send('NOTICE', config.public_channels[i], msg);
 	}
-	bot.sendMessage(groupId, telemsg, { parse_mode: 'Markdown' });
+	bot.sendMessage(groupId, telemsg, { parse_mode: 'HTML' });
 	socketmsg(config.irc_nick, msg);
 	logmsg(config.irc_nick, msg);
 	io.emit('np', { song: song });
