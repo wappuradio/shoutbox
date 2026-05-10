@@ -60,5 +60,5 @@ runs:
           ${{ (!endsWith(github.ref_name, '/merge')) && format('ghcr.io/${{ github.repository }}:{0}', github.ref_name) || '' }}
 
 outputs:
-  image: 
+  image:
     value: ghcr.io/${{ github.repository }}:${{ github.sha }}
