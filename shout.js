@@ -22,6 +22,10 @@ var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	channels: config.public_channels.concat(config.private_channels)
 });
 
+irc.on('error', function(message) {
+    console.error('nodeirc error:', message);
+});
+
 var queue = [], users = {}, lastsong = '', lasttime;
 
 function private(chan) {
