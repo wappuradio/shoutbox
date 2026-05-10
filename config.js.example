@@ -12,8 +12,8 @@ var config = {
 	irc_nick: '',
 	irc_host: '',
 	irc_port: 6667,
-	irc_sasl: true
-	irc_password: ''
+	irc_sasl: true,
+	irc_password: '',
 	private_channels: ['#foo', '#bar'],
 	public_channels: ['#secret key'],
 	np_url: '',
