@@ -62,7 +62,7 @@ runs:
         push: ${{ inputs.push }}
         tags: |
           ghcr.io/${{ github.repository }}:${{ github.sha }}
-          ${{ (!endsWith(github.ref_name, '/merge')) && format('ghcr.io/${{ github.repository }}:{0}', github.ref_name) || '' }}
+          ${{ (!endsWith(github.ref_name, '/merge')) && format('ghcr.io/{0}:{1}', github.repository, github.ref_name) || '' }}
 
 outputs:
   image:
