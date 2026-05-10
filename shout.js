@@ -1,3 +1,4 @@
+// vim: noexpandtab
 var config = require('./config');
 
 var fs = require('fs');
@@ -14,6 +15,8 @@ var request = require('request');
 
 var Irc = require('irc');
 var irc = new Irc.Client(config.irc_host, config.irc_nick, {
+	sasl: config.irc_sasl,
+	password: config.irc_password,
 	userName: config.irc_user,
 	realName: config.irc_name,
 	channels: config.public_channels.concat(config.private_channels)

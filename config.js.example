@@ -1,3 +1,4 @@
+// vim: noexpandtab
 var config = {
 	hostname: '', // irc domain name
 	token: '', // telegram bot token
@@ -11,6 +12,8 @@ var config = {
 	irc_nick: '',
 	irc_host: '',
 	irc_port: 6667,
+	irc_sasl: true,
+	irc_password: '',
 	private_channels: ['#foo', '#bar'],
 	public_channels: ['#secret key'],
 	np_url: '',
