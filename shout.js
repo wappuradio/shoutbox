@@ -22,9 +22,15 @@ var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	channels: config.public_channels.concat(config.private_channels)
 });
 
+// Error logging
 irc.on('error', function(message) {
-    console.error('nodeirc error:', message);
+    console.error('nodeirc error:', JSON.stringify(message, null, 2));
 });
+
+bot.on('polling_error', (error) => {
+    console.error('Telegram Polling Error:', error);
+});
+
 
 var queue = [], users = {}, lastsong = '', lasttime;
 
