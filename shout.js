@@ -1,4 +1,10 @@
 // vim: noexpandtab
+// Fix for Node 24 + irc-upd compatibility
+const util = require('util');
+util.log = function() {
+    console.log(`${new Date().toISOString()} -`, ...arguments);
+};
+
 var config = require('./config');
 
 var fs = require('fs');
