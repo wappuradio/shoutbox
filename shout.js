@@ -23,6 +23,13 @@ var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	debug: config.irc_debug
 });
 
+irc.on('raw', function(message) {
+	if (config.irc_log_raw) {
+		console.log(new Date().toISOString() + ' - RAW:', JSON.stringify(message));
+	}
+});
+
+
 // Error logging
 irc.on('error', function(message) {
     console.error('nodeirc error:', JSON.stringify(message, null, 2));

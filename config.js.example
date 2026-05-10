@@ -15,6 +15,7 @@ var config = {
 	irc_sasl: true,
 	irc_password: '',
 	irc_debug: false,
+	irc_log_raw: false,
 	private_channels: ['#foo', '#bar'],
 	public_channels: ['#secret key'],
 	np_url: '',
