@@ -252,7 +252,6 @@ function gracefulShutdown() {
 		checkExit();
 	});
 
-	// The timeout stays here as a safety net
 	setTimeout(() => {
 		console.error('Could not close connections in time, forceful exit.');
 		process.exit(1);
