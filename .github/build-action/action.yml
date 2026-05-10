@@ -39,7 +39,7 @@ runs:
             if sys.argv[1] in json.load(f)['tags']:
               print('exists=true')
             else:
-              print('exists=false')"
+              print('exists=false')
         except urllib.error.HTTPError:
           print('exists=false')" \
         \
