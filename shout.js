@@ -19,6 +19,7 @@ var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	password: config.irc_password,
 	userName: config.irc_user,
 	realName: config.irc_name,
+	channels: config.public_channels.concat(config.private_channels),
 	debug: config.irc_debug
 });
 
@@ -29,15 +30,6 @@ irc.on('error', function(message) {
 
 bot.on('polling_error', (error) => {
     console.error('Telegram Polling Error:', error);
-});
-
-// Join channels after succesful log in
-irc.on('registered', function(message) {
-	console.log('Connected! Joining channels...');
-	var allChannels = config.public_channels.concat(config.private_channels);
-	allChannels.forEach(function(chan) {
-		irc.join(chan);
-	});
 });
 
 
