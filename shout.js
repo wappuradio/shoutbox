@@ -13,7 +13,7 @@ var http = require('http').Server(express);
 var io = require('socket.io')(http);
 var request = require('request');
 
-var Irc = require('irc');
+var Irc = require('irc-upd');
 var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	sasl: config.irc_sasl,
 	password: config.irc_password,
