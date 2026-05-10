@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  #pull_request: {}
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+
+  build:
+    runs-on: actions-runner
+    steps:
+      - uses: GrantBirki/pr-status@v1.2.2
+        id: pr-status
+
+      - name: wait-for-approval
+        if: steps.pr-status.outputs.review_decision != 'APPROVED'
+        run: exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: build-action
+        uses: ./.github/build-action
+        with:
+          push: "false"
