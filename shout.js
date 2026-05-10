@@ -19,7 +19,8 @@ var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	password: config.irc_password,
 	userName: config.irc_user,
 	realName: config.irc_name,
-	channels: config.public_channels.concat(config.private_channels)
+	channels: config.public_channels.concat(config.private_channels),
+	debug: config.irc_debug
 });
 
 // Error logging
