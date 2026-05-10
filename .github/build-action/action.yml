@@ -1,0 +1,64 @@
+name: build-action
+
+inputs:
+  registry_username:
+    default: ''
+  registry_password:
+    default: ''
+  push:
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Check if commit already pushed to registry
+      id: check_registry
+      shell: bash
+      run: |
+        python3 -c "
+        import sys
+        import urllib.request
+        import json
+        import base64
+
+        with urllib.request.urlopen('https://ghcr.io/token?scope=repository:${{ github.repository }}:pull') as f:
+            token = json.load(f)['token']
+
+        req = urllib.request.Request(
+            'https://ghcr.io/v2/${{ github.repository }}/tags/list',
+            headers={'Authorization': f'Bearer {token}'}
+        )
+
+        with urllib.request.urlopen(req) as f:
+            if sys.argv[1] in json.load(f)['tags']:
+                print('exists=true')
+            else:
+                print('exists=false')" \
+        \
+        "${{ github.sha }}" \
+        >> $GITHUB_OUTPUT
+
+    - name: Log in to registry
+      if: inputs.push == 'true' && steps.check_registry.outputs.exists == 'false'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ inputs.registry_username }}
+        password: ${{ inputs.registry_password }}
+
+    - name: Build and push
+      if: steps.check_registry.outputs.exists == 'false'
+      id: docker
+      uses: docker/build-push-action@v5
+      with:
+        push: ${{ inputs.push }}
+        tags: |
+          ghcr.io/${{ github.repository }}:${{ github.sha }}
+          ${{ (!endsWith(github.ref_name, '/merge')) && format('ghcr.io/${{ github.repository }}:{0}', github.ref_name) || '' }}
+
+outputs:
+  image:
+    value: ghcr.io/${{ github.repository }}:${{ github.sha }}
