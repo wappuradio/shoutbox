@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "master"
-      - "node24"
 
 jobs:
   build:
