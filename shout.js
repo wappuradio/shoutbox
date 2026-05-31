@@ -16,7 +16,11 @@ var groupId = config.group;
 
 var express = require('express')();
 var http = require('http').Server(express);
-var io = require('socket.io')(http);
+var io = require('socket.io')(http, {
+	cors: {
+		origin: "*",
+	},
+});
 var request = require('request');
 
 var Irc = require('irc-upd');
