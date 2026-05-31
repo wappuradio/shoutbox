@@ -456,7 +456,7 @@ function updateVotes(){
 
 var hilight = ['mikit', 'toimitus', 'tuottaja', 'toimittaja'];
 
-const IS_DEV = ['webbi-beta.wappuradio.fi', 'webbi-test.wappuradio.fi'].includes(window.location.host);
+const IS_DEV = window.location.pathname.startsWith('/test/');
 const SOCKET_IO_PATH = IS_DEV ? '/test/api/socket.io' : '/api/socket.io';
 const socket = io(
   'https://wappuradio.fi/',
