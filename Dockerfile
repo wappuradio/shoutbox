@@ -1,4 +1,5 @@
-FROM node:24
+# temporary mirror from varesa to circumcent dockerhub ratelimit for now
+FROM registry.acl.fi/mirror/node:24
 
 WORKDIR /app
 COPY . /app
