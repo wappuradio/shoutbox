@@ -455,7 +455,17 @@ function updateVotes(){
 }
 
 var hilight = ['mikit', 'toimitus', 'tuottaja', 'toimittaja'];
-var socket = io();
+
+const IS_DEV = ['webbi-beta.wappuradio.fi', 'webbi-test.wappuradio.fi'].includes(window.location.host);
+const SOCKET_IO_PATH = IS_DEV ? '/test/api/socket.io' : '/api/socket.io';
+const socket = io(
+  'https://wappuradio.fi/',
+  {
+    withCredentials: false,
+    path: SOCKET_IO_PATH
+  }
+);
+
 socket.emit('info', { secret: secret });
 const onMsg = function (msg) {
 	console.log(msg);
