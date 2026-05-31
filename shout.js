@@ -1,4 +1,10 @@
 // vim: noexpandtab
+// Fix for Node 24 + irc-upd compatibility
+const util = require('util');
+util.log = function() {
+    console.log(`${new Date().toISOString()} -`, ...arguments);
+};
+
 var config = require('./config');
 
 var fs = require('fs');
@@ -10,10 +16,14 @@ var groupId = config.group;
 
 var express = require('express')();
 var http = require('http').Server(express);
-var io = require('socket.io')(http);
+var io = require('socket.io')(http, {
+	cors: {
+		origin: "*",
+	},
+});
 var request = require('request');
 
-var Irc = require('irc');
+var Irc = require('irc-upd');
 var irc = new Irc.Client(config.irc_host, config.irc_nick, {
 	sasl: config.irc_sasl,
 	password: config.irc_password,
@@ -232,31 +242,41 @@ bot.on('message', function (msg) {
 });
 
 function gracefulShutdown() {
-	console.log('Shutting down...');
-	bot.stopPolling();
+    console.log('Shutting down...');
 
-	let closed = 0;
-	const checkExit = () => {
-		closed++;
-		// Exit when HTTP and IRC have stopped
-		if (closed === 2) process.exit(0);
-	};
+    // Check if the function exists before calling to prevent crashes
+    const stopBot = typeof bot.stopPolling === 'function'
+        ? bot.stopPolling()
+        : Promise.resolve();
 
-	irc.disconnect('Goodbye!', () => {
-		console.log('IRC disconnected.');
-		checkExit();
-	});
+    stopBot.then(() => {
+        console.log('Telegram polling stopped.');
+        let closed = 0;
+        const checkExit = () => {
+            closed++;
+            if (closed === 2) process.exit(0);
+        };
 
-	http.close(() => {
-		console.log('HTTP server closed.');
-		checkExit();
-	});
+        irc.disconnect('Goodbye!', () => {
+            console.log('IRC disconnected.');
+            checkExit();
+        });
 
-	setTimeout(() => {
-		console.error('Could not close connections in time, forceful exit.');
-		process.exit(1);
-	}, 5000);
+        http.close(() => {
+            console.log('HTTP server closed.');
+            checkExit();
+        });
+    }).catch(err => {
+        console.error('Error during shutdown:', err);
+        process.exit(1);
+    });
+
+    setTimeout(() => {
+        console.error('Forceful exit.');
+        process.exit(1);
+    }, 5000);
 }
+
 
 
 process.on('SIGINT', gracefulShutdown);
